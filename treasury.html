@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>QUEUE</title>
+<link rel="icon" type="image/png" href="Logo v2.png" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+    :root {
+      --primary: #1f2937;
+      --accent: #1e40af;
+      --bg-light: #ffffff;
+      --text-light: #ffffff;
+      --text-dark: #1f2937;
+      --shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+ 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+ 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url("Facade.png"); /* Background for the queuing side */
+      background-size: cover;
+      background-repeat: no-repeat;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      color: var(--text-light);
+    }
+ 
+    h2 {
+      background-color: #32418c;
+      width: 100%;
+      left: 0%;
+      padding-top: 5%;
+      text-align: center;
+      box-shadow: 1px 1px 1px gray;
+      color: white;
+      padding: .5rem;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .title{
+      text-shadow: 1px 1px 1px rgb(27, 26, 26);
+    }
+
+    img{
+      filter: drop-shadow(1px 1px 1px rgb(32, 32, 32));
+    }
+ 
+    .display-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .display-area-controller{
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+    
+    .card {
+      background: var(--bg-light);
+      border: 2px solid #31428C;
+      border-radius: 1px;
+      box-shadow: 0 0 2px gray;
+      width: 20rem;
+      max-width: 100%;
+      text-align: center;
+      height: 13rem;
+    }
+
+    .card-controller {
+      background: var(--bg-light);
+      border: 2px solid #31428C;
+      border-radius: 1px;
+      box-shadow: 0 0 2px gray;
+      padding: 2rem;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+ 
+    .card h3, .card-controller h3 {
+      font-size: 2rem;
+      color: #31428C;
+    }
+ 
+    .card span, .card-controller span {
+      font-weight: bold;
+      font-size: 7rem;
+      display: block;
+      color: var(--primary);
+    }
+ 
+    button {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      margin-top: 1rem;
+      background-color: var(--primary);
+      color: var(--text-light);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+ 
+    button:hover {
+      background-color: var(--accent);
+    }
+ 
+    .reset-button {
+      background-color: #dc2626;
+    }
+ 
+    .reset-button:hover {
+      background-color: #9f1c1c;
+    }
+ 
+    #controls, #customerDisplay {
+      max-width: 1400px;
+      margin: auto;
+    }
+ 
+    #controls {
+      display: none;
+    }
+ 
+    #customerDisplay {
+      display: none;
+    }
+ 
+    #queueDisplay {
+      font-size: 1.8rem;
+      font-weight: bold;
+      background-color: var(--primary);
+      color: var(--text-light);
+      padding: 1.2rem;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+    .split {
+     display: flex;
+     flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      }
+
+    @media (min-width: 768px) {
+      .split {
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .display-area {
+        flex-direction: column;
+      }
+
+      .video-section,
+      .counters {
+        width: 100%;
+      }
+
+      .card span {
+        font-size: 6rem;
+      }
+    }
+    .video-section {
+      background-color: #000;
+            border-radius: 1px;
+ box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      height: 23rem;
+      width: 100%;
+    }
+    .video-section video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+</style>
+</head>
+<body>
+ 
+<!-- CONTROLLER VIEW -->
+<div id="controls">
+<div id="queueDisplay">
+    Current Number: <span id="currentNumber">0</span><br />
+    Next Number: <span id="nextNumber">1</span>
+</div>
+ 
+  <div class="display-area-controller">
+    <!-- 5 Windows for Admissions -->
+    <div class="card-controller">
+      <h3>WINDOW 1</h3>
+      <div>Now Serving: <span id="counter1Display">-</span></div>
+      <button onclick="nextNumber(1)">Next Ticket</button>
+      <button onclick="assignSpecificTicket(1)">Assign Specific</button>
+      <button onclick="goBack(1)">Undo</button>
+    </div>
+    <div class="card-controller">
+      <h3>WINDOW 2</h3>
+      <div>Now Serving: <span id="counter2Display">-</span></div>
+      <button onclick="nextNumber(2)">Next Ticket</button>
+      <button onclick="assignSpecificTicket(2)">Assign Specific</button>
+      <button onclick="goBack(2)">Undo</button>
+    </div>
+    <div class="card-controller">
+      <h3>WINDOW 3</h3>
+      <div>Now Serving: <span id="counter3Display">-</span></div>
+      <button onclick="nextNumber(3)">Next Ticket</button>
+      <button onclick="assignSpecificTicket(3)">Assign Specific</button>
+      <button onclick="goBack(3)">Undo</button>
+    </div>
+    <div class="card-controller">
+      <h3>WINDOW 4</h3>
+      <div>Now Serving: <span id="counter4Display">-</span></div>
+      <button onclick="nextNumber(4)">Next Ticket</button>
+      <button onclick="assignSpecificTicket(4)">Assign Specific</button>
+      <button onclick="goBack(4)">Undo</button>
+    </div>
+    <div class="card-controller">
+      <h3>WINDOW 5</h3>
+      <div>Now Serving: <span id="counter5Display">-</span></div>
+      <button onclick="nextNumber(5)">Next Ticket</button>
+      <button onclick="assignSpecificTicket(5)">Assign Specific</button>
+      <button onclick="goBack(5)">Undo</button>
+    </div>
+  </div>
+ 
+  <button class="reset-button" onclick="resetQueue()">🔁 Reset Queue</button>
+</div>
+ 
+<!-- CUSTOMER VIEW -->
+<div id="customerDisplay">
+  <h2>
+    <img src="Logo v2.png" alt="Logo" style="height: auto; max-height: 5rem; margin-right: 11rem; vertical-align: middle;" />
+    <span class="title">TREASURY OFFICE NU NAZARETH SCHOOL</span>
+  </h2>
+<div class="split">
+   <div class="video-section">
+        <video autoplay muted loop>
+        <source src="C:\Users\nativ\Desktop\IT SPECIALIST\QUEUE\Did you know that Nazareth School.mp4" />
+        Your browser does not support the video tag.
+        </video>
+   </div>
+
+   <div class="display-area">
+     <!-- 5 Windows for Admissions (Customer View) -->
+     <div class="card">
+       <h3>WINDOW 1</h3>
+       <span id="custCounter1">-</span>
+     </div>
+     <div class="card">
+       <h3>WINDOW 2</h3>
+       <span id="custCounter2">-</span>
+     </div>
+     <div class="card">
+       <h3>WINDOW 3</h3>
+       <span id="custCounter3">-</span>
+     </div>
+     <div class="card">
+       <h3>WINDOW 4</h3>
+       <span id="custCounter4">-</span>
+     </div>
+     <div class="card">
+       <h3>WINDOW 5</h3>
+       <span id="custCounter5">-</span>
+     </div>
+   </div>
+</div>
+</div>
+ 
+<script>
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://queue---treasury-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+  };
+ 
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+ 
+  const queueRef = db.ref("queueNumber");
+  const countersRef = db.ref("counters");
+ 
+  const isController = new URLSearchParams(window.location.search).get("mode") === "controller";
+  document.getElementById("controls").style.display = isController ? "block" : "none";
+  document.getElementById("customerDisplay").style.display = isController ? "none" : "block";
+ 
+  const currentEl = document.getElementById("currentNumber");
+  const nextEl = document.getElementById("nextNumber");
+  const counterDisplays = [document.getElementById("counter1Display"), document.getElementById("counter2Display"), document.getElementById("counter3Display"), document.getElementById("counter4Display"), document.getElementById("counter5Display")];
+  const custDisplays = [document.getElementById("custCounter1"), document.getElementById("custCounter2"), document.getElementById("custCounter3"), document.getElementById("custCounter4"), document.getElementById("custCounter5")];
+ 
+  queueRef.on("value", snapshot => {
+    const queueNum = snapshot.val() || 0;
+    currentEl.textContent = queueNum;
+    nextEl.textContent = queueNum + 1;
+  });
+ 
+  countersRef.on("value", snapshot => {
+    const data = snapshot.val() || {};
+    for (let i = 0; i < 5; i++) {
+      const counter = data[`counter${i+1}`] || "-";
+      counterDisplays[i].textContent = counter;
+      custDisplays[i].textContent = counter;
+    }
+  });
+ 
+  function nextNumber(counterId) {
+    queueRef.transaction(current => {
+      const next = (current || 0) + 1;
+      assignToCounter(next, counterId);
+      return next;
+    });
+  }
+ 
+  function assignSpecificTicket(counterId) {
+    const val = prompt("Enter ticket number:");
+    const num = parseInt(val);
+    if (!isNaN(num)) assignToCounter(num, counterId);
+  }
+ 
+  function assignToCounter(ticket, counterId) {
+    const key = `counter${counterId}`;
+    countersRef.child(key).get().then(snapshot => {
+      const current = snapshot.val();
+      if (current) {
+        db.ref(`history/${key}`).push(current); // save to history
+      }
+      countersRef.child(key).set(ticket);
+    });
+  }
+ 
+function goBack(counterId) {
+  const key = `counter${counterId}`;
+  const historyRef = db.ref(`history/${key}`);
+  historyRef.limitToLast(1).once("child_added", snap => {
+    const last = snap.val();
+    if (last !== null) {
+      countersRef.child(key).set(last);
+      snap.ref.remove();
+ 
+      // Decrease queueNumber by 1
+      queueRef.transaction(current => {
+        return current > 0 ? current - 1 : 0;
+      });
+    }
+  });
+}
+ 
+function resetQueue() {
+    const confirmReset = confirm("Are you sure you want to reset the queue to 0?");
+    if (!confirmReset) return;
+    queueRef.set(0);
+    countersRef.set({ counter1: "-", counter2: "-", counter3: "-", counter4: "-", counter5: "-" });
+    db.ref("history").remove();
+}
+</script>
+ 
+</body>
+</html>
