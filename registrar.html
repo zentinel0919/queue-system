@@ -49,8 +49,6 @@
       margin-bottom: 1rem;
     }
 
-
-
  
     .display-area {
   display: flex;
@@ -198,8 +196,10 @@
       text-shadow: 1px 1px 1px rgb(27, 26, 26);
     }
 
-    img{
-      filter: drop-shadow(1px 1px 1px rgb(32, 32, 32));
+    
+    img {
+      filter: drop-shadow(1px 1px 1px rgb(78, 76, 76));
+      max-height: 4rem;
     }
 
 
@@ -220,7 +220,6 @@
 <div>Now Serving: <span id="counter1Display">-</span></div>
 <button onclick="nextNumber(1)">Next Ticket</button>
 <button onclick="assignSpecificTicket(1)">Assign Specific</button>
-<button onclick="goBack(1)">Undo</button>
 </div>
 </div>
  
@@ -229,14 +228,14 @@
  
 <!-- CUSTOMER VIEW -->
 <div id="customerDisplay">
-<h2>
-  <img src="Logo v2.png" alt="Logo" style="height: auto; max-height: 5rem; margin-right: 11rem; vertical-align: middle;" />
-  <span class="title">REGISTRAR OFFICE NU NAZARETH SCHOOL</span>
-</h2>
+  <h2>
+    <img src="Logo v2.png" alt="Logo" style="height: auto; max-height: 5rem; margin-right: 11rem; vertical-align: middle;" />
+    <span class="title">REGISTRAR OFFICE NU NAZARETH SCHOOL</span>
+  </h2>
 <div class="split">
    <div class="video-section">
         <video autoplay muted loop>
-        <source src="video-section.mp4" type="video/mp4"/>
+        <source src="video-section2.mp4" type="video/mp4"/>
         Your browser does not support the video tag.
         </video>
    </div>
@@ -314,23 +313,6 @@
       countersRef.child(key).set(ticket);
     });
   }
- 
-function goBack(counterId) {
-  const key = `counter${counterId}`;
-  const historyRef = db.ref(`history/${key}`);
-  historyRef.limitToLast(1).once("child_added", snap => {
-    const last = snap.val();
-    if (last !== null) {
-      countersRef.child(key).set(last);
-      snap.ref.remove();
- 
-      // Decrease queueNumber by 1
-      queueRef.transaction(current => {
-        return current > 0 ? current - 1 : 0;
-      });
-    }
-  });
-}
  
  
   function resetQueue() {
